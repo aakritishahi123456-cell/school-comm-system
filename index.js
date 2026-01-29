@@ -3,6 +3,7 @@
 
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const SimpleDatabase = require('./database-setup');
 const MessageProcessor = require('./message-processor');
 const WhatsAppSender = require('./whatsapp-sender');
@@ -17,6 +18,7 @@ const messageProcessor = new MessageProcessor(database, whatsappSender);
 
 // Middleware
 app.use(express.json());
+app.use(express.static(__dirname)); // Serve static files including HTML
 
 // Log startup
 console.log('🚀 Starting Enhanced WhatsApp School Communication System...');
@@ -27,32 +29,44 @@ console.log('- VERIFY_TOKEN:', process.env.VERIFY_TOKEN ? '✅ Set' : '❌ Not s
 console.log('- WA_ACCESS_TOKEN:', process.env.WA_ACCESS_TOKEN ? '✅ Set' : '❌ Not set');
 console.log('- WA_PHONE_NUMBER_ID:', process.env.WA_PHONE_NUMBER_ID ? '✅ Set' : '❌ Not set');
 
-// Root endpoint
+// Dashboard route
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-dashboard.html'));
+});
+
+// Root endpoint - redirect to dashboard
 app.get('/', (req, res) => {
-  res.json({
-    message: 'WhatsApp School Communication System for Nepal',
-    status: 'running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'production',
-    version: '2.0.0',
-    features: [
-      'WhatsApp Integration ✅',
-      'Teacher Daily Updates ✅',
-      'Parent Notifications ✅',
-      'Admin Announcements ✅',
-      'Bilingual Support (English/Nepali) ✅',
-      'Message Processing ✅',
-      'Database Storage ✅'
-    ],
-    whatsappStatus: whatsappSender.getStatus(),
-    sampleData: {
-      schools: database.schools.length,
-      teachers: database.teachers.length,
-      parents: database.parents.length,
-      students: database.students.length,
-      messages: database.messages.length
-    }
-  });
+  // Check if request accepts HTML (browser) or JSON (API)
+  if (req.headers.accept && req.headers.accept.includes('text/html')) {
+    res.redirect('/dashboard');
+  } else {
+    res.json({
+      message: 'WhatsApp School Communication System for Nepal',
+      status: 'running',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'production',
+      version: '2.0.0',
+      features: [
+        'WhatsApp Integration ✅',
+        'Teacher Daily Updates ✅',
+        'Parent Notifications ✅',
+        'Admin Announcements ✅',
+        'Bilingual Support (English/Nepali) ✅',
+        'Message Processing ✅',
+        'Database Storage ✅',
+        'Test Dashboard ✅'
+      ],
+      whatsappStatus: whatsappSender.getStatus(),
+      sampleData: {
+        schools: database.schools.length,
+        teachers: database.teachers.length,
+        parents: database.parents.length,
+        students: database.students.length,
+        messages: database.messages.length
+      },
+      dashboardUrl: `${req.protocol}://${req.get('host')}/dashboard`
+    });
+  }
 });
 
 // Health check endpoint
