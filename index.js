@@ -1,23 +1,31 @@
-// Standalone server for Render deployment
-// This file runs directly without compilation
+// Enhanced WhatsApp School Communication System
+// Complete server with message processing, database, and WhatsApp integration
 
 require('dotenv').config();
 const express = require('express');
+const SimpleDatabase = require('./database-setup');
+const MessageProcessor = require('./message-processor');
+const WhatsAppSender = require('./whatsapp-sender');
+
 const app = express();
 const port = process.env.PORT || 10000;
+
+// Initialize components
+const database = new SimpleDatabase();
+const whatsappSender = new WhatsAppSender();
+const messageProcessor = new MessageProcessor(database, whatsappSender);
 
 // Middleware
 app.use(express.json());
 
 // Log startup
-console.log('🚀 Starting WhatsApp School Communication System...');
+console.log('🚀 Starting Enhanced WhatsApp School Communication System...');
 console.log('📊 Environment Check:');
 console.log('- NODE_ENV:', process.env.NODE_ENV || 'not set');
 console.log('- PORT:', process.env.PORT || 'not set (using 10000)');
 console.log('- VERIFY_TOKEN:', process.env.VERIFY_TOKEN ? '✅ Set' : '❌ Not set');
 console.log('- WA_ACCESS_TOKEN:', process.env.WA_ACCESS_TOKEN ? '✅ Set' : '❌ Not set');
 console.log('- WA_PHONE_NUMBER_ID:', process.env.WA_PHONE_NUMBER_ID ? '✅ Set' : '❌ Not set');
-console.log('- DATABASE_URL:', process.env.DATABASE_URL ? '✅ Set' : '❌ Not set');
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -26,14 +34,24 @@ app.get('/', (req, res) => {
     status: 'running',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'production',
-    version: '1.0.0',
+    version: '2.0.0',
     features: [
-      'WhatsApp Integration',
-      'Teacher Daily Updates',
-      'Parent Notifications',
-      'Admin Announcements',
-      'Bilingual Support (English/Nepali)'
-    ]
+      'WhatsApp Integration ✅',
+      'Teacher Daily Updates ✅',
+      'Parent Notifications ✅',
+      'Admin Announcements ✅',
+      'Bilingual Support (English/Nepali) ✅',
+      'Message Processing ✅',
+      'Database Storage ✅'
+    ],
+    whatsappStatus: whatsappSender.getStatus(),
+    sampleData: {
+      schools: database.schools.length,
+      teachers: database.teachers.length,
+      parents: database.parents.length,
+      students: database.students.length,
+      messages: database.messages.length
+    }
   });
 });
 
@@ -48,11 +66,15 @@ app.get('/health', (req, res) => {
       total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + 'MB'
     },
     nodeVersion: process.version,
+    components: {
+      database: 'ready',
+      whatsappSender: whatsappSender.isConfigured() ? 'configured' : 'not configured',
+      messageProcessor: 'ready'
+    },
     environment: {
       verifyToken: process.env.VERIFY_TOKEN ? 'configured' : 'missing',
       whatsappToken: process.env.WA_ACCESS_TOKEN ? 'configured' : 'missing',
-      phoneNumberId: process.env.WA_PHONE_NUMBER_ID ? 'configured' : 'missing',
-      database: process.env.DATABASE_URL ? 'configured' : 'missing'
+      phoneNumberId: process.env.WA_PHONE_NUMBER_ID ? 'configured' : 'missing'
     }
   });
 });
@@ -86,11 +108,10 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-// Webhook message receiver (POST)
-app.post('/webhook', (req, res) => {
+// Enhanced webhook message receiver (POST)
+app.post('/webhook', async (req, res) => {
   console.log('📨 Received webhook message:', JSON.stringify(req.body, null, 2));
   
-  // Basic message processing (placeholder)
   try {
     const body = req.body;
     
@@ -103,13 +124,18 @@ app.post('/webhook', (req, res) => {
           const senderNumber = message.from;
           const messageText = message.text ? message.text.body : '';
           
-          console.log('📱 Message details:');
+          console.log('📱 Processing WhatsApp message:');
           console.log('- From:', senderNumber);
           console.log('- Text:', messageText);
           console.log('- Type:', message.type);
           
-          // TODO: Add message parsing and response logic here
-          console.log('✅ Message processed successfully');
+          // Process the message using our enhanced processor
+          if (messageText && message.type === 'text') {
+            const result = await messageProcessor.processIncomingMessage(senderNumber, messageText);
+            console.log('✅ Message processing result:', result);
+          } else {
+            console.log('ℹ️ Skipping non-text message');
+          }
         }
       }
     }
@@ -120,6 +146,35 @@ app.post('/webhook', (req, res) => {
   res.sendStatus(200);
 });
 
+// API endpoint to get recent messages
+app.get('/api/messages', (req, res) => {
+  const limit = parseInt(req.query.limit) || 10;
+  const messages = database.getRecentMessages(limit);
+  res.json({
+    messages: messages,
+    total: database.messages.length,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// API endpoint to get system stats
+app.get('/api/stats', (req, res) => {
+  res.json({
+    schools: database.schools.length,
+    teachers: database.teachers.filter(t => t.role === 'teacher').length,
+    admins: database.teachers.filter(t => t.role === 'admin').length,
+    parents: database.parents.length,
+    students: database.students.length,
+    messages: database.messages.length,
+    messagesByType: {
+      daily_update: database.messages.filter(m => m.type === 'daily_update').length,
+      attendance: database.messages.filter(m => m.type === 'attendance').length,
+      announcement: database.messages.filter(m => m.type === 'announcement').length
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Test endpoint for WhatsApp integration
 app.get('/test', (req, res) => {
   res.json({
@@ -127,12 +182,20 @@ app.get('/test', (req, res) => {
     webhookUrl: `${req.protocol}://${req.get('host')}/webhook`,
     verifyUrl: `${req.protocol}://${req.get('host')}/webhook?hub.mode=subscribe&hub.verify_token=${process.env.VERIFY_TOKEN}&hub.challenge=test123`,
     healthUrl: `${req.protocol}://${req.get('host')}/health`,
-    instructions: [
-      '1. Use the webhookUrl in your Meta Developer Console',
-      '2. Use your VERIFY_TOKEN for webhook verification',
-      '3. Test webhook verification with the verifyUrl',
-      '4. Monitor health with the healthUrl'
-    ]
+    apiEndpoints: [
+      'GET /api/messages - Recent messages',
+      'GET /api/stats - System statistics'
+    ],
+    testInstructions: [
+      '1. Configure webhook in Meta Developer Console',
+      '2. Send test message from +1 555 145 3997',
+      '3. Try these message formats:'
+    ],
+    messageFormats: {
+      teacherUpdate: 'Class: Grade 5A\nSubject: Mathematics\nTopic: Addition\nHomework: Page 25\nUnderstanding: Good',
+      attendance: 'Attendance: P,A,P',
+      announcement: 'Announcement: Holiday\nMessage: School closed tomorrow'
+    }
   });
 });
 
@@ -157,27 +220,30 @@ app.use((req, res) => {
       'GET /health',
       'GET /webhook',
       'POST /webhook',
-      'GET /test'
+      'GET /test',
+      'GET /api/messages',
+      'GET /api/stats'
     ]
   });
 });
 
 // Start server
 const server = app.listen(port, '0.0.0.0', () => {
-  console.log('🎉 Server started successfully!');
+  console.log('🎉 Enhanced Server started successfully!');
   console.log(`📡 Server running on port ${port}`);
   console.log(`🌐 Access your app at: http://localhost:${port}`);
   console.log('📋 Available endpoints:');
-  console.log('  - GET  /        - Main info');
+  console.log('  - GET  /        - System info');
   console.log('  - GET  /health  - Health check');
   console.log('  - GET  /webhook - Webhook verification');
   console.log('  - POST /webhook - Receive messages');
   console.log('  - GET  /test    - Test information');
+  console.log('  - GET  /api/messages - Recent messages');
+  console.log('  - GET  /api/stats - System statistics');
   console.log('');
-  console.log('🔗 Next steps:');
-  console.log('1. Configure webhook in Meta Developer Console');
-  console.log('2. Test webhook verification');
-  console.log('3. Send test WhatsApp messages');
+  console.log('🔗 Ready for WhatsApp integration!');
+  console.log('📱 Test number: +1 555 145 3997');
+  console.log('🎯 Send messages in the specified formats to test');
 });
 
 // Graceful shutdown
