@@ -62,21 +62,21 @@ class MessageProcessor {
 
     try {
       switch (parsedMessage.type) {
-        case 'DAILY_UPDATE':
-          return await this.handleDailyUpdate(senderNumber, parsedMessage);
-        
-        case 'ATTENDANCE':
-          return await this.handleAttendance(senderNumber, parsedMessage);
-        
-        case 'ANNOUNCEMENT':
-          return await this.handleAnnouncement(senderNumber, parsedMessage);
-        
-        default:
-          return await this.handleUnknownMessage(senderNumber, messageText);
+      case 'DAILY_UPDATE':
+        return await this.handleDailyUpdate(senderNumber, parsedMessage);
+
+      case 'ATTENDANCE':
+        return await this.handleAttendance(senderNumber, parsedMessage);
+
+      case 'ANNOUNCEMENT':
+        return await this.handleAnnouncement(senderNumber, parsedMessage);
+
+      default:
+        return await this.handleUnknownMessage(senderNumber, messageText);
       }
     } catch (error) {
       console.error('❌ Error processing message:', error);
-      await this.whatsapp.sendMessage(senderNumber, 
+      await this.whatsapp.sendMessage(senderNumber,
         '❌ Sorry, there was an error processing your message. Please try again or contact support.');
       return { success: false, error: error.message };
     }
@@ -87,14 +87,14 @@ class MessageProcessor {
     // Validate teacher
     const teacher = this.db.findTeacherByPhone(senderNumber);
     if (!teacher) {
-      await this.whatsapp.sendMessage(senderNumber, 
+      await this.whatsapp.sendMessage(senderNumber,
         '❌ Error: Teacher not registered. Please contact school admin.');
       return { success: false, error: 'Teacher not found' };
     }
 
     // Validate class
     if (teacher.className !== parsedMessage.className) {
-      await this.whatsapp.sendMessage(senderNumber, 
+      await this.whatsapp.sendMessage(senderNumber,
         `❌ Error: You are not assigned to class "${parsedMessage.className}". Your class is "${teacher.className}".`);
       return { success: false, error: 'Class mismatch' };
     }
@@ -110,7 +110,7 @@ class MessageProcessor {
     });
 
     // Send confirmation to teacher
-    await this.whatsapp.sendMessage(senderNumber, 
+    await this.whatsapp.sendMessage(senderNumber,
       `✅ Daily update for ${parsedMessage.className} saved successfully. Messages will be sent to parents shortly.`);
 
     // Send to parents
@@ -129,7 +129,7 @@ class MessageProcessor {
   async handleAttendance(senderNumber, parsedMessage) {
     const teacher = this.db.findTeacherByPhone(senderNumber);
     if (!teacher) {
-      await this.whatsapp.sendMessage(senderNumber, 
+      await this.whatsapp.sendMessage(senderNumber,
         '❌ Error: Teacher not registered. Please contact school admin.');
       return { success: false, error: 'Teacher not found' };
     }
@@ -144,7 +144,7 @@ class MessageProcessor {
       originalText: `Attendance: ${parsedMessage.records.join(',')}`
     });
 
-    await this.whatsapp.sendMessage(senderNumber, 
+    await this.whatsapp.sendMessage(senderNumber,
       `✅ Attendance for ${teacher.className} saved successfully.`);
 
     return { success: true, messageId: savedMessage.id };
@@ -154,7 +154,7 @@ class MessageProcessor {
   async handleAnnouncement(senderNumber, parsedMessage) {
     const admin = this.db.findAdminByPhone(senderNumber);
     if (!admin) {
-      await this.whatsapp.sendMessage(senderNumber, 
+      await this.whatsapp.sendMessage(senderNumber,
         '❌ Error: Admin not registered. Please contact system administrator.');
       return { success: false, error: 'Admin not found' };
     }
@@ -170,7 +170,7 @@ class MessageProcessor {
     });
 
     // Send confirmation to admin
-    await this.whatsapp.sendMessage(senderNumber, 
+    await this.whatsapp.sendMessage(senderNumber,
       '✅ Announcement sent successfully to all parents in the school.');
 
     // Send to all parents
@@ -186,7 +186,7 @@ class MessageProcessor {
   }
 
   // Handle unknown message
-  async handleUnknownMessage(senderNumber, messageText) {
+  async handleUnknownMessage(senderNumber, _messageText) {
     const helpMessage = `❌ Unknown message format. Please use one of these formats:
 
 📚 Daily Update:

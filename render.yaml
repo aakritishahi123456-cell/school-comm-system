@@ -1,9 +1,19 @@
 services:
+  # PostgreSQL Database
+  - type: pserv
+    name: school-comm-db
+    plan: free
+    databaseName: school_comm_system
+    user: school_comm_user
+
+  # Web Service
   - type: web
     name: school-comm-system
     env: node
-    buildCommand: npm install && npm run build && npx prisma generate
-    startCommand: npx prisma migrate deploy && npm start
+    plan: free
+    buildCommand: npm install && npx prisma generate
+    startCommand: npm start
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
@@ -11,16 +21,24 @@ services:
         fromDatabase:
           name: school-comm-db
           property: connectionString
-      - key: VERIFY_TOKEN
-        sync: false
       - key: WA_ACCESS_TOKEN
-        sync: false
+        sync: false  # Set manually in dashboard
       - key: WA_PHONE_NUMBER_ID
-        sync: false
-      - key: TZ
-        value: Asia/Kathmandu
-
-databases:
-  - name: school-comm-db
-    databaseName: school_comm_system
-    user: school_comm_user
+        value: "992612663930736"
+      - key: VERIFY_TOKEN
+        sync: false  # Set manually in dashboard
+      - key: WA_WEBHOOK_URL
+        value: https://school-comm-system.onrender.com/webhook
+      - key: LOG_LEVEL
+        value: info
+      - key: ENABLE_RATE_LIMITING
+        value: "true"
+      - key: ENABLE_COMPRESSION
+        value: "true"
+      - key: ENABLE_CACHING
+        value: "false"
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: TRUST_PROXY
+        value: "true"
+    autoDeploy: true

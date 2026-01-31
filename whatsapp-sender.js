@@ -56,13 +56,13 @@ class WhatsAppSender {
       if (success) {
         return true;
       }
-      
+
       if (attempt < maxRetries) {
         console.log(`🔄 Retry ${attempt}/${maxRetries} for ${recipientNumber}`);
         await this.delay(1000 * attempt); // Exponential backoff
       }
     }
-    
+
     console.error(`❌ Failed to send message after ${maxRetries} attempts`);
     return false;
   }

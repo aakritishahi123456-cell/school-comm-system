@@ -125,24 +125,24 @@ app.get('/webhook', (req, res) => {
 // Enhanced webhook message receiver (POST)
 app.post('/webhook', async (req, res) => {
   console.log('📨 Received webhook message:', JSON.stringify(req.body, null, 2));
-  
+
   try {
     const body = req.body;
-    
+
     if (body.object === 'whatsapp_business_account') {
       if (body.entry && body.entry[0] && body.entry[0].changes && body.entry[0].changes[0]) {
         const change = body.entry[0].changes[0];
-        
+
         if (change.value && change.value.messages && change.value.messages[0]) {
           const message = change.value.messages[0];
           const senderNumber = message.from;
           const messageText = message.text ? message.text.body : '';
-          
+
           console.log('📱 Processing WhatsApp message:');
           console.log('- From:', senderNumber);
           console.log('- Text:', messageText);
           console.log('- Type:', message.type);
-          
+
           // Process the message using our enhanced processor
           if (messageText && message.type === 'text') {
             const result = await messageProcessor.processIncomingMessage(senderNumber, messageText);
@@ -156,7 +156,7 @@ app.post('/webhook', async (req, res) => {
   } catch (error) {
     console.error('❌ Error processing webhook:', error);
   }
-  
+
   res.sendStatus(200);
 });
 
@@ -214,7 +214,7 @@ app.get('/test', (req, res) => {
 });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error('💥 Server error:', err);
   res.status(500).json({
     error: 'Internal server error',
@@ -242,43 +242,48 @@ app.use((req, res) => {
 });
 
 // Start server
-const server = app.listen(port, '0.0.0.0', () => {
-  console.log('🎉 Enhanced Server started successfully!');
-  console.log(`📡 Server running on port ${port}`);
-  console.log(`🌐 Access your app at: http://localhost:${port}`);
-  console.log('📋 Available endpoints:');
-  console.log('  - GET  /        - System info');
-  console.log('  - GET  /health  - Health check');
-  console.log('  - GET  /webhook - Webhook verification');
-  console.log('  - POST /webhook - Receive messages');
-  console.log('  - GET  /test    - Test information');
-  console.log('  - GET  /api/messages - Recent messages');
-  console.log('  - GET  /api/stats - System statistics');
-  console.log('');
-  console.log('🔗 Ready for WhatsApp integration!');
-  console.log('📱 Test number: +1 555 145 3997');
-  console.log('🎯 Send messages in the specified formats to test');
-});
-
-// Graceful shutdown
-const gracefulShutdown = (signal) => {
-  console.log(`\n📴 Received ${signal}, shutting down gracefully...`);
-  server.close(() => {
-    console.log('✅ Server closed successfully');
-    process.exit(0);
+if (require.main === module) {
+  const server = app.listen(port, '0.0.0.0', () => {
+    console.log('🎉 Enhanced Server started successfully!');
+    console.log(`📡 Server running on port ${port}`);
+    console.log(`🌐 Access your app at: http://localhost:${port}`);
+    console.log('📋 Available endpoints:');
+    console.log('  - GET  /        - System info');
+    console.log('  - GET  /health  - Health check');
+    console.log('  - GET  /webhook - Webhook verification');
+    console.log('  - POST /webhook - Receive messages');
+    console.log('  - GET  /test    - Test information');
+    console.log('  - GET  /api/messages - Recent messages');
+    console.log('  - GET  /api/stats - System statistics');
+    console.log('');
+    console.log('🔗 Ready for WhatsApp integration!');
+    console.log(`📱 Test number: ${process.env.TEST_WHATSAPP_NUMBER || '+1 555 145 3997'}`);
+    console.log('🎯 Send messages in the specified formats to test');
   });
-};
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  // Graceful shutdown
+  const gracefulShutdown = (signal) => {
+    console.log(`\n📴 Received ${signal}, shutting down gracefully...`);
+    server.close(() => {
+      console.log('✅ Server closed successfully');
+      process.exit(0);
+    });
+  };
 
-// Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
-  console.error('💥 Uncaught Exception:', err);
-  process.exit(1);
-});
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
-});
+  // Handle uncaught exceptions
+  process.on('uncaughtException', (err) => {
+    console.error('💥 Uncaught Exception:', err);
+    process.exit(1);
+  });
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
+    process.exit(1);
+  });
+}
+
+// Export app for testing
+module.exports = app;

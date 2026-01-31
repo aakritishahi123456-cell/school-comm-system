@@ -9,7 +9,7 @@ class SimpleDatabase {
     this.parents = [];
     this.messages = [];
     this.attendance = [];
-    
+
     // Initialize with sample data
     this.initializeSampleData();
   }
@@ -30,7 +30,7 @@ class SimpleDatabase {
       id: 'admin_1',
       firstName: 'Rajesh',
       lastName: 'Sharma',
-      whatsappNumber: '+15551453997', // Your test number
+      whatsappNumber: process.env.TEST_WHATSAPP_NUMBER || '+15551453997',
       schoolId: 'school_1',
       role: 'admin'
     };
@@ -41,7 +41,7 @@ class SimpleDatabase {
       id: 'teacher_1',
       firstName: 'Ram',
       lastName: 'Sharma',
-      whatsappNumber: '+15551453997', // Your test number
+      whatsappNumber: process.env.TEST_WHATSAPP_NUMBER || '+15551453997',
       schoolId: 'school_1',
       role: 'teacher',
       className: 'Grade 5A'
@@ -53,7 +53,7 @@ class SimpleDatabase {
       id: 'parent_1',
       firstName: 'John',
       lastName: 'Doe',
-      whatsappNumber: '+15551453997', // Your test number
+      whatsappNumber: process.env.TEST_WHATSAPP_NUMBER || '+15551453997',
       preferredLanguage: 'en',
       schoolId: 'school_1'
     };

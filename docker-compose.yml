@@ -1,0 +1,204 @@
+version: '3.8'
+
+services:
+  # Main application
+  app:
+    build: .
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - school-comm-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # Message processing worker
+  message-worker:
+    build: .
+    command: ["node", "src/workers/messageWorker.js"]
+    environment:
+      - NODE_ENV=production
+      - WORKER_TYPE=message
+      - MESSAGE_WORKER_CONCURRENCY=5
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - school-comm-network
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  # WhatsApp sending worker
+  whatsapp-worker:
+    build: .
+    command: ["node", "src/workers/whatsappWorker.js"]
+    environment:
+      - NODE_ENV=production
+      - WORKER_TYPE=whatsapp
+      - WHATSAPP_WORKER_CONCURRENCY=3
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - school-comm-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  # Notification batch worker
+  notification-worker:
+    build: .
+    command: ["node", "src/workers/notificationWorker.js"]
+    environment:
+      - NODE_ENV=production
+      - WORKER_TYPE=notification
+      - NOTIFICATION_WORKER_CONCURRENCY=2
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - school-comm-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-school_comm_db}
+      POSTGRES_USER: ${POSTGRES_USER:-school_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password_123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - school-comm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-school_user} -d ${POSTGRES_DB:-school_comm_db}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # Redis for caching and queues
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - school-comm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - school-comm-network
+    restart: unless-stopped
+    profiles:
+      - with-nginx
+
+  # Redis Commander (development only)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - school-comm-network
+    profiles:
+      - development
+
+networks:
+  school-comm-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
