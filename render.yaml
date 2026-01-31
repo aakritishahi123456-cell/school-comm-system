@@ -43,3 +43,4 @@ services:
         value: "true"
 
     autoDeploy: true
+
