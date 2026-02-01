@@ -2,7 +2,7 @@
   "name": "school-comm-system",
   "version": "3.0.0",
   "description": "Production-grade WhatsApp School Communication System for Nepal",
-  "main": "simple-server.js",
+  "main": "twilio-server.js",
   "scripts": {
     "start": "node simple-server.js",
     "dev": "node simple-server.js",
@@ -16,6 +16,7 @@
   "dependencies": {
     "express": "^4.18.2",
     "dotenv": "^17.2.3"
+    "twilio": "^4.19.0"
   },
   "devDependencies": {},
   "engines": {
