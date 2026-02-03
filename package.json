@@ -1,21 +1,25 @@
 {
   "name": "school-comm-system",
-  "version": "3.0.0",
-  "description": "Production-grade WhatsApp School Communication System for Nepal",
+  "version": "3.1.0",
+  "description": "WhatsApp School Communication System with Twilio Integration",
   "main": "twilio-server.js",
   "scripts": {
-    "start": "node simple-server.js",
-    "dev": "node simple-server.js",
-    "build": "echo 'No build needed - simple server ready'",
-    "test": "echo 'Tests skipped for simple deployment'"
+    "start": "node twilio-server.js",
+    "dev": "node twilio-server.js",
+    "simple": "node simple-server.js",
+    "build": "echo 'No build needed - ready for deployment'",
+    "test": "echo 'Tests skipped for deployment'",
+    "test-twilio": "node test-twilio-integration.js",
+    "setup-twilio": "node setup-twilio.js",
+    "deploy:render": "echo 'Ready for Render deployment with Twilio'"
   },
-  "keywords": ["whatsapp", "school", "communication", "nepal", "education"],
+  "keywords": ["whatsapp", "school", "communication", "nepal", "education", "twilio"],
   "author": "School Communication Team",
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {
     "express": "^4.18.2",
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.2.3",      
     "twilio": "^4.19.0"
   },
   "devDependencies": {},
