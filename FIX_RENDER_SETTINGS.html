@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Render Build Command - URGENT</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f44 0%, #c00 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #c00;
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .urgent {
+            background: #fee;
+            border: 3px solid #f44;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .urgent h2 {
+            color: #c00;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .step-box {
+            background: #f0f8ff;
+            border-left: 5px solid #5469d4;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .step-box h3 {
+            color: #5469d4;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .step-box p {
+            line-height: 1.8;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .code-inline {
+            background: #2d2d2d;
+            color: #50fa7b;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .wrong {
+            background: #fee;
+            color: #f44;
+            text-decoration: line-through;
+        }
+
+        .btn-big {
+            display: block;
+            background: #5469d4;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 24px;
+            margin: 20px 0;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .btn-big:hover {
+            background: #4051b5;
+            transform: scale(1.02);
+        }
+
+        .checklist {
+            background: #fff9e6;
+            border-left: 5px solid #ffa500;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .checklist h3 {
+            color: #ff8800;
+            margin-bottom: 15px;
+        }
+
+        .checklist ol {
+            margin-left: 20px;
+            line-height: 2;
+            font-size: 16px;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .success h3 {
+            color: #155724;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🚨 URGENT - Fix Render Settings</h1>
+
+        <div class="urgent">
+            <h2>⚠️ The Problem</h2>
+            <p style="font-size: 18px; margin-top: 10px;">Render's dashboard has the build command set manually. This
+                <strong>overrides</strong> your GitHub render.yaml file!</p>
+        </div>
+
+        <div class="step-box">
+            <h3>✅ What You Did Right</h3>
+            <p>You updated GitHub correctly - the render.yaml file now shows:</p>
+            <p style="margin-top: 10px;"><code class="code-inline">buildCommand: npm install</code></p>
+        </div>
+
+        <div class="step-box">
+            <h3>❌ But Render Dashboard Still Has Old Value</h3>
+            <p>The build command is set directly in Render's settings, so it's ignoring your GitHub file.</p>
+        </div>
+
+        <a href="https://dashboard.render.com" target="_blank" class="btn-big">
+            🚀 OPEN RENDER DASHBOARD NOW
+        </a>
+
+        <div class="checklist">
+            <h3>📋 Follow These Exact Steps:</h3>
+            <ol>
+                <li>In Render, click on your <strong>"school-comm-system"</strong> service</li>
+                <li>Click the <strong>"Settings"</strong> tab in the left sidebar</li>
+                <li>Scroll down to find <strong>"Build & Deploy"</strong> section</li>
+                <li>Find the <strong>"Build Command"</strong> text field</li>
+                <li>It currently says: <code class="code-inline wrong">npm install && npx prisma generate</code></li>
+                <li>Change it to just: <code class="code-inline">npm install</code></li>
+                <li>Click <strong>"Save Changes"</strong> at the bottom</li>
+                <li>Go to "Events" or "Overview" tab</li>
+                <li>Click <strong>"Manual Deploy"</strong> → <strong>"Deploy latest commit"</strong></li>
+            </ol>
+        </div>
+
+        <div class="success">
+            <h3>🎉 After This Fix</h3>
+            <p style="font-size: 16px; margin-top: 10px;">Your build will succeed and show:</p>
+            <p style="margin-top: 10px;">✅ Running build command 'npm install'...<br>✅ Build successful<br>✅ Server
+                running</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+            <p style="font-size: 14px; color: #666;">
+                <strong>Quick Summary:</strong> Go to Render Settings → Build & Deploy → Change "Build Command" field →
+                Save → Redeploy
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

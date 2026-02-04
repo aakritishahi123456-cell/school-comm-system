@@ -1,4 +1,5 @@
 // WhatsApp School Communication System with Twilio Integration
+console.log('🚀 Starting Twilio Server - Fix Version 2.0 (Optional Credentials)');
 require('dotenv').config();
 const express = require('express');
 const twilio = require('twilio');
@@ -6,8 +7,18 @@ const twilio = require('twilio');
 const app = express();
 const port = process.env.PORT || 10000;
 
-// Initialize Twilio client
-const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+// Initialize Twilio client only if credentials are provided
+const twilioConfigured = !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN);
+const client = twilioConfigured
+  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+  : null;
+
+if (!twilioConfigured) {
+  console.warn('⚠️  Twilio credentials not configured. WhatsApp messaging will be disabled.');
+  console.warn('   Set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN to enable messaging.');
+} else {
+  console.log('✅ Twilio client initialized successfully');
+}
 
 // Middleware
 app.use(express.json());
@@ -29,9 +40,20 @@ app.use((req, res, next) => {
 // ===== WHATSAPP MESSAGE SENDER =====
 async function sendWhatsAppMessage(to, message, mediaUrl = null) {
   try {
+    // Check if Twilio is configured
+    if (!twilioConfigured || !client) {
+      console.warn('⚠️  Cannot send message: Twilio not configured');
+      return {
+        success: false,
+        error: 'Twilio credentials not configured',
+        to: to,
+        needsConfiguration: true
+      };
+    }
+
     // Ensure phone number has country code
     const phoneNumber = to.startsWith('+') ? to : `+977${to}`;
-    
+
     const messageOptions = {
       from: process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886',
       to: `whatsapp:${phoneNumber}`,
@@ -43,7 +65,7 @@ async function sendWhatsAppMessage(to, message, mediaUrl = null) {
     }
 
     const result = await client.messages.create(messageOptions);
-    
+
     console.log('✅ WhatsApp message sent:', {
       sid: result.sid,
       to: phoneNumber,
@@ -51,9 +73,9 @@ async function sendWhatsAppMessage(to, message, mediaUrl = null) {
       timestamp: new Date().toISOString()
     });
 
-    return { 
-      success: true, 
-      sid: result.sid, 
+    return {
+      success: true,
+      sid: result.sid,
       status: result.status,
       to: phoneNumber
     };
@@ -63,8 +85,8 @@ async function sendWhatsAppMessage(to, message, mediaUrl = null) {
       to: to,
       timestamp: new Date().toISOString()
     });
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error.message,
       to: to
     };
@@ -101,19 +123,19 @@ function processTeacherMessage(message) {
 // ===== PARENT MESSAGE TEMPLATES =====
 function createParentMessage(teacherMessage, className = 'General') {
   const processed = processTeacherMessage(teacherMessage);
-  
+
   const parentMessage = `📚 Daily Update - ${processed.className}
 
 ${processed.content}
 
 ---
 🏫 ${process.env.SCHOOL_NAME || 'Your School Name'}
-📅 ${new Date().toLocaleDateString('en-US', { 
-  weekday: 'long', 
-  year: 'numeric', 
-  month: 'long', 
-  day: 'numeric' 
-})}
+📅 ${new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })}
 📱 School Communication System`;
 
   return parentMessage;
@@ -121,19 +143,19 @@ ${processed.content}
 
 function createAnnouncementMessage(title, content, priority = 'normal') {
   const priorityEmoji = priority === 'urgent' ? '🚨' : '📢';
-  
+
   return `${priorityEmoji} ${title}
 
 ${content}
 
 ---
 🏫 ${process.env.SCHOOL_NAME || 'Your School Name'}
-📅 ${new Date().toLocaleDateString('en-US', { 
-  weekday: 'long', 
-  year: 'numeric', 
-  month: 'long', 
-  day: 'numeric' 
-})}
+📅 ${new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })}
 📱 School Communication System`;
 }
 
@@ -156,7 +178,7 @@ app.get('/', (req, res) => {
       healthCheck: true
     },
     twilio: {
-      configured: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN),
+      configured: twilioConfigured,
       whatsappFrom: process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886'
     }
   });
@@ -175,8 +197,8 @@ app.get('/health', (req, res) => {
       heap: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB'
     },
     twilio: {
-      configured: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN),
-      ready: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_WHATSAPP_FROM)
+      configured: twilioConfigured,
+      ready: twilioConfigured && !!(process.env.TWILIO_WHATSAPP_FROM)
     }
   });
 });
@@ -187,10 +209,10 @@ app.get('/webhook', (req, res) => {
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
 
-  console.log('Webhook verification attempt:', { 
-    mode, 
-    token: token ? 'present' : 'missing', 
-    challenge: challenge ? 'present' : 'missing' 
+  console.log('Webhook verification attempt:', {
+    mode,
+    token: token ? 'present' : 'missing',
+    challenge: challenge ? 'present' : 'missing'
   });
 
   if (mode === 'subscribe' && token === process.env.VERIFY_TOKEN) {
@@ -198,7 +220,7 @@ app.get('/webhook', (req, res) => {
     res.status(200).send(challenge);
   } else {
     console.log('❌ Webhook verification failed');
-    res.status(403).json({ 
+    res.status(403).json({
       error: 'Forbidden',
       message: 'Invalid verify token',
       expected: process.env.VERIFY_TOKEN ? 'Token configured' : 'No token configured'
@@ -211,9 +233,9 @@ app.post('/webhook', (req, res) => {
   console.log('📨 Meta WhatsApp webhook received:', JSON.stringify(req.body, null, 2));
 
   // Immediate response to WhatsApp (required)
-  res.status(200).json({ 
-    received: true, 
-    timestamp: new Date().toISOString() 
+  res.status(200).json({
+    received: true,
+    timestamp: new Date().toISOString()
   });
 
   // Process webhook data
@@ -229,7 +251,7 @@ app.post('/webhook', (req, res) => {
                   type: message.type,
                   text: message.text ? message.text.body : 'N/A'
                 });
-                
+
                 // Process teacher message and send to parents
                 if (message.text && message.text.body) {
                   processAndForwardMessage(message.from, message.text.body);
@@ -248,7 +270,7 @@ app.post('/webhook', (req, res) => {
 // Twilio webhook for incoming messages
 app.post('/webhook/twilio', (req, res) => {
   const { From, To, Body, MessageSid, ProfileName } = req.body;
-  
+
   console.log('📨 Twilio WhatsApp message received:', {
     from: From,
     to: To,
@@ -271,14 +293,14 @@ app.post('/webhook/twilio', (req, res) => {
 async function processAndForwardMessage(teacherPhone, message) {
   try {
     console.log('👨‍🏫 Processing teacher message from:', teacherPhone);
-    
+
     // Process the message
     const processed = processTeacherMessage(message);
     console.log('📝 Processed message:', processed);
-    
+
     // Create parent-friendly message
     const parentMessage = createParentMessage(message, processed.className);
-    
+
     // Send confirmation to teacher
     const confirmationMessage = `✅ Message received and processed!
 
@@ -293,17 +315,17 @@ Thank you for keeping parents informed! 🙏
 📱 School Communication System`;
 
     await sendWhatsAppMessage(teacherPhone, confirmationMessage);
-    
+
     // Here you would normally send to parent numbers
     // For now, we'll just log what would be sent
     console.log('📤 Would send to parents:', parentMessage);
-    
+
     // Test: Send to a test parent number if configured
     if (process.env.TEST_PARENT_NUMBER) {
       console.log('📱 Sending test message to parent...');
       await sendWhatsAppMessage(process.env.TEST_PARENT_NUMBER, parentMessage);
     }
-    
+
   } catch (error) {
     console.error('❌ Error processing teacher message:', error.message);
   }
@@ -337,7 +359,7 @@ app.post('/api/send-daily-update', async (req, res) => {
         sid: result.sid,
         error: result.error
       });
-      
+
       // Small delay to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 100));
     }
@@ -381,7 +403,7 @@ app.post('/api/send-announcement', async (req, res) => {
   try {
     const announcement = createAnnouncementMessage(title, message, priority);
     const results = [];
-    
+
     console.log(`📢 Sending ${priority} announcement to ${parentNumbers.length} parents`);
 
     for (const parentNumber of parentNumbers) {
@@ -391,7 +413,7 @@ app.post('/api/send-announcement', async (req, res) => {
         success: result.success,
         sid: result.sid
       });
-      
+
       // Small delay to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 100));
     }
@@ -423,7 +445,7 @@ app.post('/api/send-announcement', async (req, res) => {
 // Test WhatsApp message
 app.post('/api/test-whatsapp', async (req, res) => {
   const { phoneNumber, message } = req.body;
-  
+
   if (!phoneNumber || !message) {
     return res.status(400).json({
       success: false,
@@ -432,9 +454,9 @@ app.post('/api/test-whatsapp', async (req, res) => {
   }
 
   console.log('🧪 Testing WhatsApp message:', { phoneNumber, message });
-  
+
   const result = await sendWhatsAppMessage(phoneNumber, message);
-  
+
   res.json({
     ...result,
     timestamp: new Date().toISOString(),
@@ -451,7 +473,7 @@ app.get('/api/stats', (req, res) => {
     timestamp: new Date().toISOString(),
     version: '3.1.0',
     features: {
-      twilioIntegration: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN),
+      twilioIntegration: twilioConfigured,
       whatsappMessaging: true,
       teacherProcessing: true,
       parentNotifications: true
@@ -479,12 +501,13 @@ app.get('/admin', (req, res) => {
       phoneNumberId: process.env.WA_PHONE_NUMBER_ID || 'not set',
       verifyToken: process.env.VERIFY_TOKEN ? 'configured' : 'missing',
       webhookUrl: process.env.WA_WEBHOOK_URL || 'not set',
-      
+
       // Twilio WhatsApp API
       twilioAccountSid: process.env.TWILIO_ACCOUNT_SID ? 'configured' : 'missing',
       twilioAuthToken: process.env.TWILIO_AUTH_TOKEN ? 'configured' : 'missing',
       twilioWhatsappFrom: process.env.TWILIO_WHATSAPP_FROM || 'not set',
-      
+      twilioStatus: twilioConfigured ? 'ready' : 'not configured',
+
       // School settings
       schoolName: process.env.SCHOOL_NAME || 'not set',
       testParentNumber: process.env.TEST_PARENT_NUMBER || 'not set'
@@ -552,16 +575,15 @@ app.listen(port, '0.0.0.0', () => {
   console.log(`   Twilio WhatsApp From: ${process.env.TWILIO_WHATSAPP_FROM || '❌ Missing'}`);
   console.log(`   School Name: ${process.env.SCHOOL_NAME || '❌ Missing'}`);
   console.log('');
-  
-  const twilioReady = !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN);
-  if (twilioReady) {
+
+  if (twilioConfigured) {
     console.log('✅ Twilio WhatsApp integration READY!');
     console.log('📱 System can send real WhatsApp messages');
   } else {
     console.log('⚠️  Twilio not configured - add TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN');
     console.log('📱 System will work for webhooks but cannot send messages');
   }
-  
+
   console.log('');
   console.log('🎯 Ready for:');
   console.log('   📨 Receiving teacher messages via WhatsApp webhook');

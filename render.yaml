@@ -41,6 +41,4 @@ services:
         value: "*"
       - key: TRUST_PROXY
         value: "true"
-
     autoDeploy: true
-

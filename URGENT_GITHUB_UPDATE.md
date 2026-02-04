@@ -1,3 +1,56 @@
+# 🚨 URGENT: Update GitHub Repository
+
+## The Problem
+Render is still using the old version of your code from GitHub. Even though we've fixed the files locally, **Render can't see the changes until they're pushed to GitHub**.
+
+## ⚡ IMMEDIATE SOLUTION
+
+### Option 1: Manual File Upload (Easiest)
+1. **Go to your GitHub repository**: https://github.com/aakritishahi123456-cell/school-comm-system
+2. **Click on `package.json`**
+3. **Click the pencil icon** (Edit this file)
+4. **Replace the entire content** with this:
+
+```json
+{
+  "name": "school-comm-system",
+  "version": "3.0.0",
+  "description": "Simple WhatsApp School Communication System",
+  "main": "simple-server.js",
+  "scripts": {
+    "start": "node simple-server.js",
+    "dev": "node simple-server.js",
+    "build": "echo 'No build needed - simple server ready'",
+    "test": "echo 'Tests skipped for simple deployment'",
+    "deploy:render": "echo 'Ready for Render deployment'"
+  },
+  "keywords": ["whatsapp", "school", "communication", "nepal", "education"],
+  "author": "School Communication Team",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}
+```
+
+5. **Click "Commit changes"**
+6. **Add commit message**: "Fix package.json for simple deployment"
+7. **Click "Commit changes"**
+
+### Option 2: Add the Simple Server File
+1. **In your GitHub repository**
+2. **Click "Add file" → "Create new file"**
+3. **Name it**: `simple-server.js`
+4. **Paste this content**:
+
+```javascript
 // Simple WhatsApp School Communication Server - No Dependencies
 require('dotenv').config();
 
@@ -46,11 +99,7 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime()),
     version: '3.0.0',
-    environment: process.env.NODE_ENV || 'development',
-    memory: {
-      used: Math.round(process.memoryUsage().rss / 1024 / 1024) + 'MB',
-      heap: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB'
-    }
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -60,7 +109,7 @@ app.get('/webhook', (req, res) => {
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
 
-  console.log('Webhook verification attempt:', { mode, token: token ? 'present' : 'missing', challenge: challenge ? 'present' : 'missing' });
+  console.log('Webhook verification attempt:', { mode, token: token ? 'present' : 'missing' });
 
   if (mode === 'subscribe' && token === process.env.VERIFY_TOKEN) {
     console.log('✅ Webhook verified successfully');
@@ -69,8 +118,7 @@ app.get('/webhook', (req, res) => {
     console.log('❌ Webhook verification failed');
     res.status(403).json({ 
       error: 'Forbidden',
-      message: 'Invalid verify token',
-      expected: process.env.VERIFY_TOKEN ? 'Token configured' : 'No token configured'
+      message: 'Invalid verify token'
     });
   }
 });
@@ -98,9 +146,6 @@ app.post('/webhook', (req, res) => {
                   type: message.type,
                   text: message.text ? message.text.body : 'N/A'
                 });
-                
-                // Here you would process the teacher's message
-                // For now, just log it
                 console.log('✅ Message processed successfully');
               });
             }
@@ -113,39 +158,7 @@ app.post('/webhook', (req, res) => {
   }
 });
 
-// API endpoints
-app.get('/api/stats', (req, res) => {
-  res.json({
-    system: 'WhatsApp School Communication',
-    status: 'operational',
-    uptime: Math.floor(process.uptime()),
-    timestamp: new Date().toISOString(),
-    stats: {
-      messagesProcessed: 0,
-      webhooksReceived: 0,
-      teachersActive: 0,
-      parentsReached: 0
-    }
-  });
-});
-
-// Test message endpoint
-app.post('/api/test-message', (req, res) => {
-  const { phoneNumber, message } = req.body;
-  
-  console.log('📤 Test message request:', { phoneNumber, message });
-  
-  // Simulate message sending
-  res.json({
-    success: true,
-    message: 'Test message would be sent',
-    to: phoneNumber,
-    content: message,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Admin dashboard (simple)
+// Admin dashboard
 app.get('/admin', (req, res) => {
   res.json({
     dashboard: 'WhatsApp School Communication Admin',
@@ -154,37 +167,8 @@ app.get('/admin', (req, res) => {
     configuration: {
       whatsappToken: process.env.WA_ACCESS_TOKEN ? 'configured' : 'missing',
       phoneNumberId: process.env.WA_PHONE_NUMBER_ID || 'not set',
-      verifyToken: process.env.VERIFY_TOKEN ? 'configured' : 'missing',
-      webhookUrl: process.env.WA_WEBHOOK_URL || 'not set'
+      verifyToken: process.env.VERIFY_TOKEN ? 'configured' : 'missing'
     },
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Error handling
-app.use((err, req, res, next) => {
-  console.error('❌ Server error:', err.message);
-  res.status(500).json({
-    error: 'Internal Server Error',
-    message: err.message,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Not Found',
-    message: `Route ${req.method} ${req.originalUrl} not found`,
-    availableRoutes: [
-      'GET /',
-      'GET /health',
-      'GET /webhook',
-      'POST /webhook',
-      'GET /api/stats',
-      'POST /api/test-message',
-      'GET /admin'
-    ],
     timestamp: new Date().toISOString()
   });
 });
@@ -194,21 +178,43 @@ app.listen(port, '0.0.0.0', () => {
   console.log('🚀 WhatsApp School Communication System Started!');
   console.log(`📍 Server running on port ${port}`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`⏰ Started at: ${new Date().toISOString()}`);
-  console.log('');
-  console.log('📋 Available endpoints:');
-  console.log(`   Health: http://localhost:${port}/health`);
-  console.log(`   Webhook: http://localhost:${port}/webhook`);
-  console.log(`   API: http://localhost:${port}/api/stats`);
-  console.log(`   Admin: http://localhost:${port}/admin`);
-  console.log('');
-  console.log('🔧 Configuration:');
-  console.log(`   WhatsApp Token: ${process.env.WA_ACCESS_TOKEN ? '✅ Configured' : '❌ Missing'}`);
-  console.log(`   Phone Number ID: ${process.env.WA_PHONE_NUMBER_ID || '❌ Missing'}`);
-  console.log(`   Verify Token: ${process.env.VERIFY_TOKEN ? '✅ Configured' : '❌ Missing'}`);
-  console.log(`   Webhook URL: ${process.env.WA_WEBHOOK_URL || '❌ Missing'}`);
-  console.log('');
   console.log('✅ Ready to receive WhatsApp webhooks!');
 });
 
 module.exports = app;
+```
+
+5. **Click "Commit new file"**
+
+## 🎯 After Updating GitHub
+
+1. **Go back to Render**
+2. **Click "Manual Deploy"**
+3. **Select "Deploy latest commit"**
+4. **Wait 2-3 minutes**
+
+## ✅ Expected Result
+
+After updating GitHub and redeploying:
+```
+✅ npm install (only express and dotenv)
+✅ Build succeeded
+✅ Server started successfully
+🚀 WhatsApp School Communication System Started!
+```
+
+## 🚨 Critical Point
+
+**Render can only see files that are in your GitHub repository.** The changes we made locally don't exist on GitHub yet, so Render is still trying to run the old Prisma code.
+
+Once you update the files on GitHub, Render will use the new simple server and it will work perfectly!
+
+## 📞 Alternative: Use GitHub Desktop
+
+If you have GitHub Desktop:
+1. Open GitHub Desktop
+2. Select your repository
+3. You'll see the changed files
+4. Commit and push them
+
+**Update GitHub first, then deploy in Render!** 🚀
