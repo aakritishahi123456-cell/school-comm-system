@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Render Deployment - 3 Steps</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+        .error-box {
+            background: #fee;
+            border-left: 4px solid #f44;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+        .error-box h3 {
+            color: #c00;
+            margin-bottom: 5px;
+        }
+        .step {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+        }
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            margin-right: 15px;
+        }
+        .step h2 {
+            display: inline-block;
+            color: #333;
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+        .step p {
+            color: #555;
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+        .code-box {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .delete {
+            color: #ff5555;
+            text-decoration: line-through;
+        }
+        .add {
+            color: #50fa7b;
+            font-weight: bold;
+        }
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 10px 0;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #48bb78;
+        }
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin-top: 30px;
+            border-radius: 5px;
+        }
+        .success-box h3 {
+            color: #155724;
+            margin-bottom: 10px;
+        }
+        .timer {
+            text-align: center;
+            font-size: 14px;
+            color: #999;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ Fix Render Deployment</h1>
+        <p class="subtitle">3 simple steps • ~3 minutes total</p>
+        
+        <div class="error-box">
+            <h3>❌ Current Problem</h3>
+            <p>Your Render deployment is failing because GitHub has the old configuration with Prisma. The fix is on your computer but not uploaded yet.</p>
+        </div>
+
+        <!-- Step 1 -->
+        <div class="step">
+            <span class="step-number">1</span>
+            <h2>Edit on GitHub</h2>
+            <p>Click the button below to open the file editor on GitHub:</p>
+            <a href="https://github.com/aakritishahi123456-cell/school-comm-system/edit/main/render.yaml" 
+               target="_blank" 
+               class="btn">
+                📝 Open render.yaml on GitHub
+            </a>
+            <p style="margin-top: 15px;"><strong>What to change:</strong></p>
+            <p>Find line 14 and change it:</p>
+            <div class="code-box">
+                <div class="delete">buildCommand: npm install && npx prisma generate</div>
+                <div class="add">buildCommand: npm install</div>
+            </div>
+            <p><strong>Then:</strong> Scroll down and click "Commit changes"</p>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step">
+            <span class="step-number">2</span>
+            <h2>Deploy on Render</h2>
+            <p>After committing on GitHub, open your Render dashboard:</p>
+            <a href="https://dashboard.render.com" 
+               target="_blank" 
+               class="btn btn-secondary">
+                🚀 Open Render Dashboard
+            </a>
+            <p style="margin-top: 15px;"><strong>Then:</strong></p>
+            <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                <li>Click on "school-comm-system" service</li>
+                <li>Click "Manual Deploy" button (top right)</li>
+                <li>Select "Deploy latest commit"</li>
+            </ol>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step">
+            <span class="step-number">3</span>
+            <h2>Verify It Works</h2>
+            <p>After deployment completes (~3 minutes), test your service:</p>
+            <a href="https://school-comm-system.onrender.com/health" 
+               target="_blank" 
+               class="btn">
+                ✅ Test Health Endpoint
+            </a>
+            <p style="margin-top: 15px;"><strong>Expected result:</strong></p>
+            <div class="code-box">
+                {"status":"healthy","version":"3.0.0",...}
+            </div>
+        </div>
+
+        <div class="success-box">
+            <h3>🎉 Success Indicators</h3>
+            <p>Your build logs should show:</p>
+            <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                <li>✅ Running build command 'npm install'...</li>
+                <li>✅ Build successful</li>
+                <li>✅ Starting service with 'npm start'</li>
+                <li>✅ Server running on port 10000</li>
+            </ul>
+            <p style="margin-top: 10px;"><strong>No more Prisma errors!</strong></p>
+        </div>
+
+        <div class="timer">
+            <p>⏱️ Estimated time: 3-5 minutes • Last updated: Jan 31, 2026</p>
+        </div>
+    </div>
+</body>
+</html>
